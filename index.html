@@ -122,7 +122,7 @@
   <aside>
     <div class="aside-head">
       <div class="lbl">Explore</div>
-      <h1>Four places</h1>
+      <h1>Three places</h1>
     </div>
     <div class="locs" id="locs"><!-- location buttons injected by JS --></div>
     <div class="aside-foot">
@@ -169,23 +169,20 @@
 
 <script>
 /* ============================================================
-   tapmaps · four locations
+   tapmaps · three locations
    ============================================================ */
 
-// The four places. Coordinates point at an iconic, street-view-rich spot.
+// The three places. Coordinates point at a spot with good Street View coverage.
 const LOCATIONS = [
-  { id:"india",    name:"India",    city:"Taj Mahal · Agra",        color:"var(--amber)",  initial:"I",
-    lat:27.174961, lng:78.042147, zoom:16, heading:20,  pitch:0,
-    desc:"The white marble mausoleum on the Yamuna — India's most photographed route end." },
-  { id:"budapest", name:"Budapest", city:"Parliament · Hungary",    color:"var(--indigo)", initial:"B",
+  { id:"budapest", name:"Budapest", city:"Hungary", color:"var(--indigo)", initial:"B",
     lat:47.507121, lng:19.045552, zoom:16, heading:210, pitch:0,
     desc:"The Danube embankment past the neo-Gothic Parliament — a classic riverside drive." },
-  { id:"england",  name:"England",  city:"Tower Bridge · London",   color:"var(--cobalt)", initial:"E",
-    lat:51.505456, lng:-0.075356, zoom:16, heading:300, pitch:0,
-    desc:"Crossing the Thames at Tower Bridge — the most recognizable span in London." },
-  { id:"scotland", name:"Scotland", city:"Royal Mile · Edinburgh",  color:"var(--green)",  initial:"S",
-    lat:55.949500, lng:-3.190700, zoom:17, heading:100, pitch:0,
-    desc:"The cobbled Old Town climb toward Edinburgh Castle along the Royal Mile." },
+  { id:"gartan",   name:"Gartan",   city:"Ireland", color:"var(--green)",  initial:"G",
+    lat:55.028900, lng:-7.899200, zoom:15, heading:90,  pitch:0,
+    desc:"Rolling lakeland around Gartan Lough in County Donegal — quiet rural roads." },
+  { id:"chennai",  name:"Chennai",  city:"India",   color:"var(--amber)",  initial:"C",
+    lat:13.050000, lng:80.282400, zoom:16, heading:200, pitch:0,
+    desc:"The Marina Beach seafront drive along the Bay of Bengal in Tamil Nadu." },
 ];
 
 // Subtle light map style, on-brand and calm.
@@ -201,7 +198,7 @@ const MAP_STYLE = [
   { featureType:"transit", stylers:[{visibility:"off"}] },
 ];
 
-let map, panorama, marker, activeIndex = 0;
+let map, panorama, marker, svService, activeIndex = 0;
 
 // Coral map pin as an inline SVG data-URI (matches the brand).
 function coralPinIcon(){
@@ -238,6 +235,8 @@ function initMap(){
     fullscreenControl:false,
     motionTracking:false,
   });
+
+  svService = new google.maps.StreetViewService();
 
   buildLocationList();
   selectLocation(0, /*animate*/ false);
@@ -297,16 +296,35 @@ function selectLocation(i, animate){
 }
 
 function setStreetView(on){
-  document.getElementById("main").classList.toggle("streetview", on);
-  panorama.setVisible(on);
+  const main = document.getElementById("main");
   document.getElementById("svBtn").classList.toggle("active", on);
   document.getElementById("mapBtn").classList.toggle("active", !on);
-  if(on){
-    // re-aim at the current place when entering street view
-    const loc = LOCATIONS[activeIndex];
-    panorama.setPosition({lat:loc.lat, lng:loc.lng});
-    panorama.setPov({heading:loc.heading, pitch:loc.pitch});
+
+  if(!on){
+    main.classList.remove("streetview");
+    panorama.setVisible(false);
+    return;
   }
+
+  // Find the nearest panorama within 1 km — needed for rural spots like Gartan,
+  // where imagery may not sit exactly on the marker.
+  const loc = LOCATIONS[activeIndex];
+  const target = {lat:loc.lat, lng:loc.lng};
+  svService.getPanorama({location:target, radius:1000, source:google.maps.StreetViewSource.OUTDOOR}, (data, status)=>{
+    if(status === "OK"){
+      panorama.setPano(data.location.pano);
+      panorama.setPov({heading:loc.heading, pitch:loc.pitch});
+      panorama.setVisible(true);
+      main.classList.add("streetview");
+    } else {
+      // No imagery nearby — stay on the map and let the user know.
+      main.classList.remove("streetview");
+      panorama.setVisible(false);
+      document.getElementById("svBtn").classList.remove("active");
+      document.getElementById("mapBtn").classList.add("active");
+      alert("No Street View imagery near " + loc.name + " — showing the map instead.");
+    }
+  });
 }
 
 // Show the overlay. `reason` lets us tell "no key yet" apart from "auth failed".
