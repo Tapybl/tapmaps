@@ -158,7 +158,7 @@
     <div class="keygate" id="keygate">
       <div class="box">
         <h3>Add your Google Maps API key</h3>
-        <p>This app needs a Google Maps JavaScript API key to load. Open <code>index.html</code> and replace <code>YOUR_API_KEY_HERE</code> near the bottom.</p>
+        <p>This app needs a Google Maps JavaScript API key to load. Open <code>index.html</code> and replace <code>AIzaSyATd831on8PZ9t1AF3GVngVDmidbVvC_Gc</code> near the bottom.</p>
         <ol>
           <li>Go to <a href="https://console.cloud.google.com/google/maps-apis" target="_blank" rel="noopener">Google Cloud → Maps</a></li>
           <li>Enable <strong>Maps JavaScript API</strong> (and Street View is included).</li>
@@ -316,11 +316,11 @@ function gmapsError(){ document.getElementById("keygate").classList.add("show");
 window.gm_authFailure = gmapsError;
 
 /* ---------- Load the Google Maps script ----------
-   Replace YOUR_API_KEY_HERE with your key. */
-const GOOGLE_MAPS_API_KEY = "YOUR_API_KEY_HERE";
+   Replace AIzaSyATd831on8PZ9t1AF3GVngVDmidbVvC_Gc with your key. */
+const GOOGLE_MAPS_API_KEY = "AIzaSyATd831on8PZ9t1AF3GVngVDmidbVvC_Gc";
 
 (function loadMaps(){
-  if(!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === "YOUR_API_KEY_HERE"){
+  if(!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === "AIzaSyATd831on8PZ9t1AF3GVngVDmidbVvC_Gc"){
     document.getElementById("keygate").classList.add("show");
     return;
   }
