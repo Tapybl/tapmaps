@@ -35,7 +35,7 @@
   .brand .mark .body{fill:var(--coral);stroke:var(--coral)}
   .brand .mark .cut{fill:var(--panel)}
   .brand .mark .wheel{fill:var(--coral)}
-  .brand .mark .dot{fill:var(--panel)}
+  .brand .mark .cutstroke{stroke:var(--panel)}
   .brand .wm{font-family:var(--wm);font-weight:800;font-size:1.5rem;letter-spacing:-.035em;color:var(--ink)}
   .tagline{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
 
@@ -162,15 +162,15 @@
 
 <header>
   <div class="brand">
-    <svg class="mark" viewBox="0 0 108 84" role="img" aria-label="tapmaps">
-      <path class="body" d="M54 12 L86 66 L22 66 Z" stroke-width="14" stroke-linejoin="round"/>
-      <circle class="cut" cx="27" cy="70" r="10.5"/>
-      <circle class="cut" cx="81" cy="70" r="10.5"/>
-      <circle class="wheel" cx="27" cy="70" r="7.5"/>
-      <circle class="wheel" cx="81" cy="70" r="7.5"/>
-      <circle class="dot" cx="45" cy="63" r="3"/>
-      <circle class="dot" cx="54" cy="63" r="3"/>
-      <circle class="dot" cx="63" cy="63" r="3"/>
+    <svg class="mark" viewBox="0 0 96 90" role="img" aria-label="tapmaps">
+      <g transform="translate(0,7)">
+        <path class="body" d="M48 19 L75 61 L21 61 Z" stroke-width="14" stroke-linejoin="round"/>
+        <circle class="cut" cx="21" cy="61" r="11.5"/>
+        <circle class="wheel" cx="21" cy="61" r="7"/>
+        <circle class="cut" cx="75" cy="61" r="11.5"/>
+        <circle class="wheel" cx="75" cy="61" r="7"/>
+        <path class="cutstroke" d="M39 61 L57 61" stroke-width="5.5" stroke-dasharray="0.1 9" stroke-linecap="round" fill="none"/>
+      </g>
     </svg>
     <span class="wm">tapmaps</span>
   </div>
