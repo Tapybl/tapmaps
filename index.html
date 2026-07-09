@@ -76,6 +76,8 @@
   .info h2{font-family:var(--head);font-weight:700;font-size:1.4rem;letter-spacing:-.02em;margin:6px 0 4px}
   .info p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.5}
   .info .coords{font-family:var(--mono);font-size:.64rem;color:var(--faint);margin-top:10px;letter-spacing:.02em}
+  .lesson-btn{display:flex;justify-content:center;text-decoration:none;margin-top:14px;width:100%}
+  .lesson-btn.disabled{opacity:.5;pointer-events:none}
 
   /* top-right controls */
   .controls{position:absolute;top:16px;right:16px;z-index:4;display:flex;gap:8px}
@@ -146,10 +148,14 @@
     </div>
 
     <div class="info" id="info">
-      <div class="lbl" id="infoTag">Location 1 / 4</div>
+      <div class="lbl" id="infoTag">Location 1 / 3</div>
       <h2 id="infoName">—</h2>
       <p id="infoDesc">—</p>
       <div class="coords" id="infoCoords">—</div>
+      <a class="btn primary lesson-btn" id="lessonBtn" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M8 6 Q8 4 10 5 L19 11 Q21 12 19 13 L10 19 Q8 20 8 18 Z"/></svg>
+        <span id="lessonLabel">Watch lesson</span>
+      </a>
     </div>
 
     <!-- shown if the API key is still the placeholder -->
@@ -176,13 +182,16 @@
 const LOCATIONS = [
   { id:"budapest", name:"Budapest", city:"Hungary", color:"var(--indigo)", initial:"B",
     lat:47.507121, lng:19.045552, zoom:16, heading:210, pitch:0,
-    desc:"The Danube embankment past the neo-Gothic Parliament — a classic riverside drive." },
+    desc:"The Danube embankment past the neo-Gothic Parliament — a classic riverside drive.",
+    lesson:"Driving Hungary", lessonUrl:"REPLACE_WITH_MOODLE_URL_HUNGARY" },
   { id:"gartan",   name:"Gartan",   city:"Ireland", color:"var(--green)",  initial:"G",
     lat:55.028900, lng:-7.899200, zoom:15, heading:90,  pitch:0,
-    desc:"Rolling lakeland around Gartan Lough in County Donegal — quiet rural roads." },
+    desc:"Rolling lakeland around Gartan Lough in County Donegal — quiet rural roads.",
+    lesson:"Driving Ireland", lessonUrl:"REPLACE_WITH_MOODLE_URL_IRELAND" },
   { id:"chennai",  name:"Chennai",  city:"India",   color:"var(--amber)",  initial:"C",
     lat:13.050000, lng:80.282400, zoom:16, heading:200, pitch:0,
-    desc:"The Marina Beach seafront drive along the Bay of Bengal in Tamil Nadu." },
+    desc:"The Marina Beach seafront drive along the Bay of Bengal in Tamil Nadu.",
+    lesson:"Driving India", lessonUrl:"REPLACE_WITH_MOODLE_URL_INDIA" },
 ];
 
 // Subtle light map style, on-brand and calm.
@@ -223,7 +232,10 @@ function initMap(){
     gestureHandling:"greedy",
   });
 
-  marker = new google.maps.Marker({ map, position:{lat:start.lat, lng:start.lng}, icon:coralPinIcon() });
+  marker = new google.maps.Marker({ map, position:{lat:start.lat, lng:start.lng}, icon:coralPinIcon(),
+    cursor:"pointer", title:"Open lesson" });
+  // Clicking the pin opens the gated lesson on the platform.
+  marker.addListener("click", ()=>openLesson(activeIndex));
 
   // Street View panorama lives in its own div and is toggled on demand.
   panorama = new google.maps.StreetViewPanorama(document.getElementById("pano"), {
@@ -293,6 +305,26 @@ function selectLocation(i, animate){
   document.getElementById("infoDesc").textContent = loc.desc;
   document.getElementById("infoCoords").textContent =
     `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`;
+
+  // lesson CTA
+  const btn = document.getElementById("lessonBtn");
+  document.getElementById("lessonLabel").textContent = `Watch: ${loc.lesson}`;
+  const ready = isLessonReady(loc.lessonUrl);
+  btn.href = ready ? loc.lessonUrl : "#";
+  btn.classList.toggle("disabled", !ready);
+}
+
+// A lesson URL is "ready" once it's a real http(s) link (not the placeholder).
+function isLessonReady(url){ return /^https?:\/\//.test(url || ""); }
+
+// Open the platform lesson (Moodle handles login + the LTI launch to the player).
+function openLesson(i){
+  const loc = LOCATIONS[i];
+  if(!isLessonReady(loc.lessonUrl)){
+    alert(`Lesson URL for "${loc.lesson}" isn't set yet.\nPaste the Moodle activity URL in the LOCATIONS list.`);
+    return;
+  }
+  window.open(loc.lessonUrl, "_blank", "noopener");
 }
 
 function setStreetView(on){
