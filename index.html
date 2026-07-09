@@ -311,23 +311,41 @@ function setStreetView(on){
   }
 }
 
-// If the script fails (bad/placeholder key), show the setup gate.
-function gmapsError(){ document.getElementById("keygate").classList.add("show"); }
-window.gm_authFailure = gmapsError;
+// Show the overlay. `reason` lets us tell "no key yet" apart from "auth failed".
+function showGate(reason){
+  const box = document.querySelector("#keygate .box");
+  if(reason === "auth"){
+    box.innerHTML = `
+      <h3>Google Maps couldn't authorize</h3>
+      <p>Your key is set, but Google rejected it. This is almost always a Cloud console setting, not the code. Check, in order:</p>
+      <ol>
+        <li>Enable <strong>Maps JavaScript API</strong> for this project.</li>
+        <li>Enable <strong>billing</strong> on the project (required, even for the free tier).</li>
+        <li>If the key is restricted by referrer, make sure it allows the site you're opening it from
+            (e.g. <code>https://TU-USUARIO.github.io/*</code>).</li>
+      </ol>
+      <p style="margin-top:14px">Open the browser console (F12) — the exact error, e.g.
+        <code>ApiNotActivatedMapError</code> or <code>BillingNotEnabledMapError</code>, tells you which one.</p>`;
+  }
+  document.getElementById("keygate").classList.add("show");
+}
+// Google calls this if the key fails to authorize.
+window.gm_authFailure = ()=>showGate("auth");
 
 /* ---------- Load the Google Maps script ----------
-   Replace AIzaSyATd831on8PZ9t1AF3GVngVDmidbVvC_Gc with your key. */
+   Paste your key below. It must start with "AIza". */
 const GOOGLE_MAPS_API_KEY = "AIzaSyATd831on8PZ9t1AF3GVngVDmidbVvC_Gc";
 
 (function loadMaps(){
-  if(!GOOGLE_MAPS_API_KEY || GOOGLE_MAPS_API_KEY === "AIzaSyATd831on8PZ9t1AF3GVngVDmidbVvC_Gc"){
-    document.getElementById("keygate").classList.add("show");
-    return;
-  }
+  // A real key starts with "AIza"; the placeholder does not. This check does NOT
+  // repeat the key string, so a find-and-replace can't accidentally break it.
+  const looksValid = /^AIza[0-9A-Za-z_\-]{10,}$/.test(GOOGLE_MAPS_API_KEY || "");
+  if(!looksValid){ showGate("key"); return; }
+
   const s = document.createElement("script");
   s.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initMap&v=weekly`;
   s.async = true;
-  s.onerror = gmapsError;
+  s.onerror = ()=>showGate("auth");
   document.head.appendChild(s);
 })();
 </script>
