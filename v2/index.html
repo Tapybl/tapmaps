@@ -203,7 +203,6 @@
           Return to map
         </button>
         <span id="lessonTitle">Lesson</span>
-        <a class="btn" id="lessonOpenNew" href="#" target="_blank" rel="noopener">Open in new tab ↗</a>
       </div>
       <iframe id="lessonFrame" title="Lesson" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>
     </div>
@@ -381,7 +380,6 @@ function openLesson(i){
   const frame = document.getElementById("lessonFrame");
 
   document.getElementById("lessonTitle").textContent = loc.lesson;
-  document.getElementById("lessonOpenNew").href = loc.lessonUrl;
 
   // Show the container FIRST so the iframe has real dimensions. The tapybl player
   // measures its height on mount — if it loads while hidden it collapses to 0 (black).
