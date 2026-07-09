@@ -75,7 +75,7 @@
   #lessonTitle{font-family:var(--head);font-weight:700;font-size:1rem;letter-spacing:-.01em;color:var(--ink)}
   #lessonOpenNew{margin-left:auto;text-decoration:none;font-size:.8rem;padding:7px 12px}
   #lessonClose{padding:7px 12px}
-  #lessonFrame{flex:1;width:100%;border:0;background:#0b0c10}
+  #lessonFrame{flex:1;min-height:0;width:100%;border:0;background:#0b0c10}
 
   /* floating info card */
   .info{position:absolute;left:20px;bottom:20px;z-index:4;width:min(340px,calc(100% - 40px));
@@ -367,17 +367,22 @@ function openLesson(i){
 
   document.getElementById("lessonTitle").textContent = loc.lesson;
   document.getElementById("lessonOpenNew").href = loc.lessonUrl;
-  if(frame.dataset.src !== loc.lessonUrl){
-    frame.src = loc.lessonUrl;
-    frame.dataset.src = loc.lessonUrl;
-  }
 
-  // leave street view if it was on, then show the lesson
+  // Show the container FIRST so the iframe has real dimensions. The tapybl player
+  // measures its height on mount — if it loads while hidden it collapses to 0 (black).
   panorama.setVisible(false);
   main.classList.remove("streetview");
   main.classList.add("lesson");
   document.getElementById("svBtn").classList.remove("active");
   document.getElementById("mapBtn").classList.remove("active");
+
+  // Load only after layout has applied, so the player mounts at the right size.
+  if(frame.dataset.src !== loc.lessonUrl){
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      frame.src = loc.lessonUrl;
+      frame.dataset.src = loc.lessonUrl;
+    }));
+  }
 }
 
 // Return to the map. Blank the frame so the video stops playing.
