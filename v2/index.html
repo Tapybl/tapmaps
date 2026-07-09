@@ -119,6 +119,14 @@
   #lessonClose{padding:7px 12px}
   #lessonStage{position:relative;width:100%;aspect-ratio:16/9;max-height:calc(100vh - 190px);background:#0b0c10}
   #lessonFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#0b0c10}
+  /* entrance: backdrop fades in, modal pops after the map zoom */
+  main.lesson #lessonWrap::before{animation:tm-fade .35s ease both}
+  main.lesson #lessonModal{animation:tm-pop .42s cubic-bezier(.2,.8,.2,1) both}
+  @keyframes tm-fade{from{opacity:0}to{opacity:1}}
+  @keyframes tm-pop{from{opacity:0;transform:scale(.9) translateY(10px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion:reduce){
+    main.lesson #lessonWrap::before,main.lesson #lessonModal{animation:none}
+  }
 
   /* floating info card */
   .info{position:absolute;left:20px;bottom:20px;z-index:4;width:min(340px,calc(100% - 40px));
@@ -388,22 +396,28 @@ function openLesson(i){
   }
   const main  = document.getElementById("main");
   const frame = document.getElementById("lessonFrame");
+  const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  document.getElementById("lessonTitle").textContent = loc.lesson;
+  // 1) Dive into the map: animated zoom toward the pin.
+  const pos = {lat:loc.lat, lng:loc.lng};
+  map.panTo(pos);
+  if(!reduce) map.setZoom(Math.min((loc.zoom || 16) + 3, 21));
 
-  // Show the container FIRST so the iframe has real dimensions. The tapybl player
-  // measures its height on mount — if it loads while hidden it collapses to 0 (black).
-  panorama.setVisible(false);
-  main.classList.remove("streetview");
-  main.classList.add("lesson");
-
-  // Load only after layout has applied, so the player mounts at the right size.
-  if(frame.dataset.src !== loc.lessonUrl){
-    requestAnimationFrame(()=>requestAnimationFrame(()=>{
-      frame.src = loc.lessonUrl;
-      frame.dataset.src = loc.lessonUrl;
-    }));
-  }
+  // 2) After the zoom settles, reveal the modal (pop + blurred backdrop).
+  const reveal = ()=>{
+    document.getElementById("lessonTitle").textContent = loc.lesson;
+    panorama.setVisible(false);
+    main.classList.remove("streetview");
+    main.classList.add("lesson");
+    // Load only after layout has applied, so the tapybl player mounts at the right size.
+    if(frame.dataset.src !== loc.lessonUrl){
+      requestAnimationFrame(()=>requestAnimationFrame(()=>{
+        frame.src = loc.lessonUrl;
+        frame.dataset.src = loc.lessonUrl;
+      }));
+    }
+  };
+  reduce ? reveal() : setTimeout(reveal, 520);
 }
 
 // Return to the map. Blank the frame so the video stops playing.
@@ -412,6 +426,9 @@ function closeLesson(){
   document.getElementById("main").classList.remove("lesson");
   frame.src = "about:blank";
   frame.dataset.src = "";
+  // zoom the map back out to the location's normal level
+  const loc = LOCATIONS[activeIndex];
+  if(map && loc) map.setZoom(loc.zoom);
 }
 
 function setStreetView(on){
