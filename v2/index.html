@@ -46,6 +46,33 @@
   .hud-pill:hover{background:#fff}
   .hud-pill svg{width:16px;height:16px}
 
+  /* Google-Maps-style search */
+  .search{position:absolute;top:16px;left:16px;z-index:5;width:min(380px,calc(100% - 32px));font-family:var(--body)}
+  .search-bar{display:flex;align-items:center;gap:6px;background:#fff;border-radius:26px;height:50px;
+    padding:0 8px 0 18px;box-shadow:0 2px 10px rgba(0,0,0,.32)}
+  .search-bar input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:1rem;
+    color:#202124;font-family:var(--body)}
+  .search-bar input::placeholder{color:#5f6368}
+  .search-ico{background:transparent;border:none;cursor:pointer;color:#5f6368;display:flex;
+    align-items:center;justify-content:center;padding:6px}
+  .search-ico svg{width:22px;height:22px;fill:currentColor}
+  .search-dir{background:#1BA1BD;border:none;border-radius:10px;width:36px;height:36px;flex:none;
+    display:flex;align-items:center;justify-content:center;cursor:pointer}
+  .search-dir svg{width:19px;height:19px;fill:#fff}
+  .search-results{margin-top:8px;background:#fff;border-radius:14px;overflow:hidden;
+    box-shadow:0 6px 22px rgba(0,0,0,.28);display:none}
+  .search.open .search-results{display:block}
+  .sr-row{display:flex;align-items:center;gap:12px;padding:11px 16px;cursor:pointer;border-bottom:1px solid #eef0f2}
+  .sr-row:last-child{border-bottom:none}
+  .sr-row:hover{background:#f3f4f6}
+  .sr-row .swatch{width:34px;height:34px;border-radius:9px;flex:none;display:flex;align-items:center;
+    justify-content:center;font-family:var(--head);font-weight:700;color:#0D0E12;font-size:1rem}
+  .sr-row .m{min-width:0;display:flex;flex-direction:column;gap:1px}
+  .sr-row .m .n{font-family:var(--head);font-weight:600;font-size:.98rem;color:#202124;letter-spacing:-.01em}
+  .sr-row .m .c{font-family:var(--mono);font-size:.64rem;color:#5f6368;margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sr-empty{padding:14px 16px;color:#5f6368;font-size:.9rem}
+
   /* ---------- Layout ---------- */
   .app{flex:1;display:flex;min-height:0}
   aside{width:288px;flex:none;border-right:1px solid var(--line);background:var(--panel);
@@ -150,20 +177,23 @@
 </header>
 
 <div class="app">
-  <aside>
-    <div class="aside-head">
-      <div class="lbl">Explore</div>
-      <h1>Three places</h1>
-    </div>
-    <div class="locs" id="locs"><!-- location buttons injected by JS --></div>
-    <div class="aside-foot">
-      Pick a place, then click its <strong style="color:var(--ink)">pin</strong> to watch the lesson.
-    </div>
-  </aside>
-
   <main id="main">
     <div id="map"></div>
     <div id="pano"></div>
+
+    <!-- Google-Maps-style search; focus/type to reveal the three places -->
+    <div class="search" id="search">
+      <div class="search-bar">
+        <input id="searchInput" type="text" placeholder="Search Google Maps" autocomplete="off" spellcheck="false">
+        <button class="search-ico" id="searchGo" aria-label="Search">
+          <svg viewBox="0 0 24 24"><path d="M15.5 14h-.79l-.28-.27a6.5 6.5 0 1 0-.7.7l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0A4.5 4.5 0 1 1 14 9.5 4.5 4.5 0 0 1 9.5 14z"/></svg>
+        </button>
+        <button class="search-dir" aria-label="Directions">
+          <svg viewBox="0 0 24 24"><path d="M21.71 11.29l-9-9a.996.996 0 0 0-1.41 0l-9 9a.996.996 0 0 0 0 1.41l9 9c.39.39 1.02.39 1.41 0l9-9a.996.996 0 0 0 0-1.41zM14 14.5V12h-4v3H8v-4c0-.55.45-1 1-1h5V7.5l3.5 3.5-3.5 3.5z"/></svg>
+        </button>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
 
     <!-- Lesson opens inside the map frame -->
     <div id="lessonWrap">
@@ -282,41 +312,47 @@ function initMap(){
 
   svService = new google.maps.StreetViewService();
 
-  buildLocationList();
+  initSearch();
   selectLocation(0, /*animate*/ false);
 
   document.getElementById("lessonClose").addEventListener("click", closeLesson);
 }
 
-function buildLocationList(){
-  const wrap = document.getElementById("locs");
-  wrap.innerHTML = "";
-  LOCATIONS.forEach((loc, i)=>{
-    const b = document.createElement("button");
-    b.className = "loc" + (i===0 ? " active":"");
-    b.dataset.i = i;
-    b.innerHTML = `
-      <span class="swatch" style="background:${loc.color}">${loc.initial}</span>
-      <span class="meta">
-        <span class="n">${loc.name}</span>
-        <span class="c">${loc.city}</span>
-      </span>
-      <span class="go" aria-hidden="true">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
-      </span>`;
-    b.addEventListener("click", ()=>selectLocation(i, true));
-    wrap.appendChild(b);
-  });
+// Google-Maps-style search: focus/type reveals the three places as suggestions.
+function initSearch(){
+  const box   = document.getElementById("search");
+  const input = document.getElementById("searchInput");
+  const list  = document.getElementById("searchResults");
+
+  function render(q){
+    const query = (q || "").trim().toLowerCase();
+    const rows = LOCATIONS.map((l,i)=>({l,i})).filter(({l})=>
+      !query || (l.name+" "+l.city+" "+l.lesson).toLowerCase().includes(query));
+    list.innerHTML = rows.length ? rows.map(({l,i})=>`
+      <div class="sr-row" data-i="${i}">
+        <span class="swatch" style="background:${l.color}">${l.initial}</span>
+        <span class="m"><span class="n">${l.name}</span><span class="c">${l.city} · ${l.lesson}</span></span>
+      </div>`).join("") : `<div class="sr-empty">No matches</div>`;
+    list.querySelectorAll(".sr-row").forEach(row=>{
+      row.addEventListener("mousedown", e=>e.preventDefault()); // keep input focus through the click
+      row.addEventListener("click", ()=>{
+        const i = Number(row.dataset.i);
+        selectLocation(i, true);
+        input.value = LOCATIONS[i].name;
+        box.classList.remove("open");
+        input.blur();
+      });
+    });
+  }
+
+  input.addEventListener("focus", ()=>{ render(input.value); box.classList.add("open"); });
+  input.addEventListener("input", ()=>{ render(input.value); box.classList.add("open"); });
+  input.addEventListener("blur",  ()=>{ setTimeout(()=>box.classList.remove("open"), 120); });
 }
 
 function selectLocation(i, animate){
   activeIndex = i;
   const loc = LOCATIONS[i];
-
-  // update active state in the list
-  document.querySelectorAll(".loc").forEach(el=>{
-    el.classList.toggle("active", Number(el.dataset.i)===i);
-  });
 
   // move the map + marker
   const pos = {lat:loc.lat, lng:loc.lng};
