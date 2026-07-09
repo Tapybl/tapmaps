@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>tapmaps — locations (v2)</title>
+
+<!-- Brand fonts (from the brand book) -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@700;800&family=Hanken+Grotesk:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=Space+Mono&display=swap" rel="stylesheet">
+
+<style>
+  :root{
+    --bg:#0D0E12; --panel:#14161B; --panel-2:#1A1D24; --line:#242A35;
+    --ink:#F2F4F8; --muted:#8A92A2; --faint:#565E6E;
+    --coral:#FF5D47; --coral-600:#E8452F;
+    /* brand palette (six tones) */
+    --cobalt:#2F6BFF; --indigo:#7C6BF6; --amber:#FFB020; --sky:#22B8FF; --green:#2BD97C;
+    --head:"Space Grotesk","Helvetica Neue",system-ui,sans-serif;
+    --body:"Hanken Grotesk","Helvetica Neue",system-ui,sans-serif;
+    --wm:"Archivo","Helvetica Neue",system-ui,sans-serif;
+    --mono:"Space Mono",ui-monospace,Menlo,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--ink);font-family:var(--body);
+    -webkit-font-smoothing:antialiased;display:flex;flex-direction:column;overflow:hidden}
+
+  /* ---------- Header ---------- */
+  header{display:flex;align-items:center;justify-content:space-between;gap:16px;
+    padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel);z-index:5}
+  .brand{display:flex;align-items:center;gap:12px}
+  .brand .tile{width:34px;height:34px;border-radius:9px;background:var(--coral);display:flex;align-items:center;justify-content:center;flex:none}
+  .brand .tile svg{width:44%;height:44%;fill:#fff}
+  .brand .wm{font-family:var(--wm);font-weight:800;font-size:1.35rem;letter-spacing:-.04em}
+  .tagline{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+
+  /* ---------- Layout ---------- */
+  .app{flex:1;display:flex;min-height:0}
+  aside{width:288px;flex:none;border-right:1px solid var(--line);background:var(--panel);
+    display:flex;flex-direction:column;overflow-y:auto}
+  .aside-head{padding:18px 20px 10px}
+  .aside-head .lbl{font-family:var(--mono);font-size:.6rem;letter-spacing:.16em;text-transform:uppercase;color:var(--faint)}
+  .aside-head h1{font-family:var(--head);font-weight:700;font-size:1.15rem;letter-spacing:-.02em;margin:6px 0 0}
+
+  .locs{display:flex;flex-direction:column;gap:8px;padding:12px 14px}
+  .loc{display:flex;align-items:center;gap:14px;padding:12px 14px;border:1px solid var(--line);
+    border-radius:14px;background:var(--panel-2);cursor:pointer;text-align:left;color:inherit;
+    font:inherit;transition:border-color .2s,transform .2s,background .2s}
+  .loc:hover{transform:translateY(-2px)}
+  .loc.active{border-color:var(--coral);background:#1e1713}
+  .loc .swatch{width:40px;height:40px;border-radius:10px;flex:none;position:relative;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;font-family:var(--head);font-weight:700;color:#0D0E12;font-size:1.1rem}
+  .loc .meta{min-width:0}
+  .loc .meta .n{font-family:var(--head);font-weight:600;font-size:1rem;letter-spacing:-.01em}
+  .loc .meta .c{font-family:var(--mono);font-size:.62rem;color:var(--muted);letter-spacing:.03em;margin-top:2px;
+    white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .loc .go{margin-left:auto;color:var(--faint);flex:none}
+  .loc.active .go{color:var(--coral)}
+
+  .aside-foot{margin-top:auto;padding:16px 20px;border-top:1px solid var(--line);
+    font-family:var(--mono);font-size:.58rem;color:var(--faint);letter-spacing:.04em;line-height:1.6}
+
+  /* ---------- Map area ---------- */
+  main{flex:1;position:relative;min-width:0}
+  #map,#pano{position:absolute;inset:0}
+  #pano{display:none}
+  main.streetview #pano{display:block}
+
+  /* lesson overlay (opens inside the map frame) */
+  #lessonWrap{position:absolute;inset:0;z-index:6;display:none;flex-direction:column;background:var(--bg)}
+  main.lesson #lessonWrap{display:flex}
+  #lessonBar{display:flex;align-items:center;gap:14px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+  #lessonTitle{font-family:var(--head);font-weight:700;font-size:1rem;letter-spacing:-.01em;color:var(--ink)}
+  #lessonOpenNew{margin-left:auto;text-decoration:none;font-size:.8rem;padding:7px 12px}
+  #lessonClose{padding:7px 12px}
+  #lessonFrame{flex:1;min-height:0;width:100%;border:0;background:#0b0c10}
+
+  /* floating info card */
+  .info{position:absolute;left:20px;bottom:20px;z-index:4;width:min(340px,calc(100% - 40px));
+    background:rgba(20,22,27,.92);backdrop-filter:blur(10px);border:1px solid var(--line);
+    border-radius:16px;padding:18px 20px;box-shadow:0 18px 44px rgba(0,0,0,.4)}
+  .info .lbl{font-family:var(--mono);font-size:.58rem;letter-spacing:.14em;text-transform:uppercase;color:var(--coral)}
+  .info h2{font-family:var(--head);font-weight:700;font-size:1.4rem;letter-spacing:-.02em;margin:6px 0 4px}
+  .info p{margin:0;color:var(--muted);font-size:.9rem;line-height:1.5}
+  .info .coords{font-family:var(--mono);font-size:.64rem;color:var(--faint);margin-top:10px;letter-spacing:.02em}
+  .lesson-btn{display:flex;justify-content:center;text-decoration:none;margin-top:14px;width:100%}
+  .lesson-btn.disabled{opacity:.5;pointer-events:none}
+
+  /* top-right controls */
+  .controls{position:absolute;top:16px;right:16px;z-index:4;display:flex;gap:8px}
+  .btn{font-family:var(--head);font-weight:600;font-size:.86rem;letter-spacing:-.01em;color:var(--ink);
+    background:rgba(20,22,27,.9);backdrop-filter:blur(8px);border:1px solid var(--line);border-radius:999px;
+    padding:9px 16px;cursor:pointer;display:inline-flex;align-items:center;gap:8px;transition:border-color .2s,background .2s}
+  .btn:hover{border-color:var(--coral)}
+  .btn svg{width:15px;height:15px;fill:currentColor}
+  .btn.primary{background:var(--coral);border-color:var(--coral);color:#fff}
+  .btn.primary:hover{background:var(--coral-600)}
+  .btn.active{border-color:var(--coral);color:var(--coral)}
+
+  /* API key overlay */
+  .keygate{position:absolute;inset:0;z-index:10;display:none;align-items:center;justify-content:center;
+    background:radial-gradient(120% 90% at 50% 0%,#161a22,#0d0e12);padding:24px}
+  .keygate.show{display:flex}
+  .keygate .box{max-width:520px;background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:32px 34px}
+  .keygate h3{font-family:var(--head);font-weight:700;font-size:1.3rem;margin:0 0 10px;letter-spacing:-.02em}
+  .keygate p{color:var(--muted);font-size:.94rem;line-height:1.6;margin:0 0 12px}
+  .keygate code{font-family:var(--mono);font-size:.82rem;background:var(--panel-2);border:1px solid var(--line);
+    border-radius:6px;padding:2px 7px;color:var(--coral)}
+  .keygate ol{color:var(--muted);font-size:.9rem;line-height:1.7;padding-left:1.2em;margin:8px 0 0}
+  .keygate a{color:var(--sky)}
+
+  @media (max-width:760px){
+    aside{position:absolute;z-index:6;height:auto;max-height:46%;bottom:0;left:0;right:0;width:100%;
+      border-right:none;border-top:1px solid var(--line)}
+    .app{flex-direction:column}
+    .locs{flex-direction:row;overflow-x:auto}
+    .loc{min-width:210px}
+    .info{bottom:auto;top:16px;left:16px}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <span class="wm">tapmaps</span>
+  </div>
+</header>
+
+<div class="app">
+  <aside>
+    <div class="aside-head">
+      <div class="lbl">Explore</div>
+      <h1>Three places</h1>
+    </div>
+    <div class="locs" id="locs"><!-- location buttons injected by JS --></div>
+    <div class="aside-foot">
+      Pick a place, then hit <strong style="color:var(--ink)">See the road</strong> to drop into Street View.
+    </div>
+  </aside>
+
+  <main id="main">
+    <div id="map"></div>
+    <div id="pano"></div>
+
+    <!-- Lesson opens inside the map frame -->
+    <div id="lessonWrap">
+      <div id="lessonBar">
+        <button class="btn" id="lessonClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
+          Back to map
+        </button>
+        <span id="lessonTitle">Lesson</span>
+        <a class="btn" id="lessonOpenNew" href="#" target="_blank" rel="noopener">Open in new tab ↗</a>
+      </div>
+      <iframe id="lessonFrame" title="Lesson" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>
+    </div>
+
+    <div class="controls">
+      <button class="btn" id="mapBtn">
+        <svg viewBox="0 0 24 24"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.4 8 12 8 12s8-6.6 8-12c0-4.4-3.6-8-8-8Zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/></svg>
+        Map
+      </button>
+      <button class="btn primary" id="svBtn">
+        <svg viewBox="0 0 24 24"><path d="M8 6 Q8 4 10 5 L19 11 Q21 12 19 13 L10 19 Q8 20 8 18 Z"/></svg>
+        See the road
+      </button>
+    </div>
+
+    <div class="info" id="info">
+      <div class="lbl" id="infoTag">Location 1 / 3</div>
+      <h2 id="infoName">—</h2>
+      <p id="infoDesc">—</p>
+      <div class="coords" id="infoCoords">—</div>
+      <a class="btn primary lesson-btn" id="lessonBtn" href="#" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24"><path d="M8 6 Q8 4 10 5 L19 11 Q21 12 19 13 L10 19 Q8 20 8 18 Z"/></svg>
+        <span id="lessonLabel">Watch lesson</span>
+      </a>
+    </div>
+
+    <!-- shown if the API key is still the placeholder -->
+    <div class="keygate" id="keygate">
+      <div class="box">
+        <h3>Add your Google Maps API key</h3>
+        <p>This app needs a Google Maps JavaScript API key to load. Open <code>index.html</code> and replace <code>AIzaSyATd831on8PZ9t1AF3GVngVDmidbVvC_Gc</code> near the bottom.</p>
+        <ol>
+          <li>Go to <a href="https://console.cloud.google.com/google/maps-apis" target="_blank" rel="noopener">Google Cloud → Maps</a></li>
+          <li>Enable <strong>Maps JavaScript API</strong> (and Street View is included).</li>
+          <li>Create an API key and paste it into the file.</li>
+        </ol>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+/* ============================================================
+   tapmaps · three locations
+   ============================================================ */
+
+// tapybl SCORM embed: the lesson player renders without login when opened as
+// https://staging.edu.tapybl.com/scorm/{publishedLessonId}/{secret}
+// The secret is org-level (same for every lesson); only the lesson id changes.
+// Get each publishedLessonId from that course's SCORM export (lessons/<id>.html).
+const TAPYBL_SCORM_BASE = "https://staging.edu.tapybl.com/scorm";
+const TAPYBL_SCORM_SECRET = "c157cbf555ded7f5bbf408791af9d9b2";
+function scormEmbed(publishedLessonId){
+  // returns "" (button stays disabled) until a real lesson id is filled in
+  if(!publishedLessonId || publishedLessonId.startsWith("PENDING")) return "";
+  return `${TAPYBL_SCORM_BASE}/${publishedLessonId}/${TAPYBL_SCORM_SECRET}`;
+}
+
+// The three places. Coordinates point at a spot with good Street View coverage.
+const LOCATIONS = [
+  { id:"budapest", name:"Budapest", city:"Hungary", color:"var(--indigo)", initial:"B",
+    lat:47.507121, lng:19.045552, zoom:16, heading:210, pitch:0,
+    desc:"The Danube embankment past the neo-Gothic Parliament — a classic riverside drive.",
+    lesson:"Driving Hungary", lessonUrl:scormEmbed("7fd49ace-64f2-4ec1-bb3b-08ded6a0920b") },
+  { id:"gartan",   name:"Gartan",   city:"Ireland", color:"var(--green)",  initial:"G",
+    lat:55.028900, lng:-7.899200, zoom:15, heading:90,  pitch:0,
+    desc:"Rolling lakeland around Gartan Lough in County Donegal — quiet rural roads.",
+    lesson:"Driving Ireland", lessonUrl:scormEmbed("5e5ecf73-a09c-4c7c-bb3c-08ded6a0920b") },
+  { id:"chennai",  name:"Chennai",  city:"India",   color:"var(--amber)",  initial:"C",
+    lat:13.050000, lng:80.282400, zoom:16, heading:200, pitch:0,
+    desc:"The Marina Beach seafront drive along the Bay of Bengal in Tamil Nadu.",
+    lesson:"Driving India", lessonUrl:scormEmbed("1ba87836-9a58-45a1-bb3a-08ded6a0920b") },
+];
+
+// Subtle light map style, on-brand and calm.
+const MAP_STYLE = [
+  { elementType:"geometry", stylers:[{color:"#f3f2ee"}] },
+  { elementType:"labels.text.fill", stylers:[{color:"#5b6068"}] },
+  { elementType:"labels.text.stroke", stylers:[{color:"#f3f2ee"}] },
+  { featureType:"water", elementType:"geometry", stylers:[{color:"#cfe3ee"}] },
+  { featureType:"road", elementType:"geometry", stylers:[{color:"#ffffff"}] },
+  { featureType:"road.highway", elementType:"geometry", stylers:[{color:"#ffe6b0"}] },
+  { featureType:"poi.park", elementType:"geometry", stylers:[{color:"#cfe9c8"}] },
+  { featureType:"poi", elementType:"labels", stylers:[{visibility:"off"}] },
+  { featureType:"transit", stylers:[{visibility:"off"}] },
+];
+
+let map, panorama, marker, svService, activeIndex = 0;
+
+// Coral map pin as an inline SVG data-URI (matches the brand).
+function coralPinIcon(){
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="56" viewBox="0 0 44 56">
+    <path d="M22 2C11 2 2 11 2 22c0 14 20 32 20 32s20-18 20-32C42 11 33 2 22 2Z" fill="#FF5D47" stroke="#fff" stroke-width="2.5"/>
+    <path d="M17 14 Q17 12 19 13 L30 20 Q32 21 30 22 L19 29 Q17 30 17 28 Z" fill="#fff"/>
+  </svg>`;
+  return { url:"data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
+           scaledSize:new google.maps.Size(44,56), anchor:new google.maps.Point(22,54) };
+}
+
+// Called by the Google Maps script once it loads.
+function initMap(){
+  const start = LOCATIONS[0];
+
+  map = new google.maps.Map(document.getElementById("map"), {
+    center:{lat:start.lat, lng:start.lng},
+    zoom:start.zoom,
+    styles:MAP_STYLE,
+    disableDefaultUI:true,
+    zoomControl:true,
+    gestureHandling:"greedy",
+  });
+
+  marker = new google.maps.Marker({ map, position:{lat:start.lat, lng:start.lng}, icon:coralPinIcon(),
+    cursor:"pointer", title:"Open lesson" });
+  // Clicking the pin opens the gated lesson on the platform.
+  marker.addListener("click", ()=>openLesson(activeIndex));
+
+  // Street View panorama lives in its own div and is toggled on demand.
+  panorama = new google.maps.StreetViewPanorama(document.getElementById("pano"), {
+    position:{lat:start.lat, lng:start.lng},
+    pov:{heading:start.heading, pitch:start.pitch},
+    visible:false,
+    disableDefaultUI:false,
+    addressControl:false,
+    fullscreenControl:false,
+    motionTracking:false,
+  });
+
+  svService = new google.maps.StreetViewService();
+
+  buildLocationList();
+  selectLocation(0, /*animate*/ false);
+
+  document.getElementById("svBtn").addEventListener("click", ()=>{ closeLesson(); setStreetView(true); });
+  document.getElementById("mapBtn").addEventListener("click", ()=>{ closeLesson(); setStreetView(false); });
+
+  // "Watch lesson" opens inside the frame instead of a new tab.
+  document.getElementById("lessonBtn").addEventListener("click", (e)=>{ e.preventDefault(); openLesson(activeIndex); });
+  document.getElementById("lessonClose").addEventListener("click", closeLesson);
+}
+
+function buildLocationList(){
+  const wrap = document.getElementById("locs");
+  wrap.innerHTML = "";
+  LOCATIONS.forEach((loc, i)=>{
+    const b = document.createElement("button");
+    b.className = "loc" + (i===0 ? " active":"");
+    b.dataset.i = i;
+    b.innerHTML = `
+      <span class="swatch" style="background:${loc.color}">${loc.initial}</span>
+      <span class="meta">
+        <span class="n">${loc.name}</span>
+        <span class="c">${loc.city}</span>
+      </span>
+      <span class="go" aria-hidden="true">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+      </span>`;
+    b.addEventListener("click", ()=>selectLocation(i, true));
+    wrap.appendChild(b);
+  });
+}
+
+function selectLocation(i, animate){
+  activeIndex = i;
+  const loc = LOCATIONS[i];
+
+  // update active state in the list
+  document.querySelectorAll(".loc").forEach(el=>{
+    el.classList.toggle("active", Number(el.dataset.i)===i);
+  });
+
+  // move the map + marker
+  const pos = {lat:loc.lat, lng:loc.lng};
+  if(animate){ map.panTo(pos); }
+  else { map.setCenter(pos); }
+  map.setZoom(loc.zoom);
+  marker.setPosition(pos);
+  marker.setAnimation(google.maps.Animation.DROP);
+
+  // keep the panorama aimed at the new place
+  panorama.setPosition(pos);
+  panorama.setPov({heading:loc.heading, pitch:loc.pitch});
+
+  // update info card
+  document.getElementById("infoTag").textContent  = `Location ${i+1} / ${LOCATIONS.length}`;
+  document.getElementById("infoName").textContent = loc.city;
+  document.getElementById("infoDesc").textContent = loc.desc;
+  document.getElementById("infoCoords").textContent =
+    `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`;
+
+  // lesson CTA
+  const btn = document.getElementById("lessonBtn");
+  document.getElementById("lessonLabel").textContent = `Watch: ${loc.lesson}`;
+  const ready = isLessonReady(loc.lessonUrl);
+  btn.href = ready ? loc.lessonUrl : "#";
+  btn.classList.toggle("disabled", !ready);
+}
+
+// A lesson URL is "ready" once it's a real http(s) link (not the placeholder).
+function isLessonReady(url){ return /^https?:\/\//.test(url || ""); }
+
+// Open the platform lesson inside the map frame (the platform gates with login).
+function openLesson(i){
+  const loc = LOCATIONS[i];
+  if(!isLessonReady(loc.lessonUrl)){
+    alert(`Lesson URL for "${loc.lesson}" isn't set yet.`);
+    return;
+  }
+  const main  = document.getElementById("main");
+  const frame = document.getElementById("lessonFrame");
+
+  document.getElementById("lessonTitle").textContent = loc.lesson;
+  document.getElementById("lessonOpenNew").href = loc.lessonUrl;
+
+  // Show the container FIRST so the iframe has real dimensions. The tapybl player
+  // measures its height on mount — if it loads while hidden it collapses to 0 (black).
+  panorama.setVisible(false);
+  main.classList.remove("streetview");
+  main.classList.add("lesson");
+  document.getElementById("svBtn").classList.remove("active");
+  document.getElementById("mapBtn").classList.remove("active");
+
+  // Load only after layout has applied, so the player mounts at the right size.
+  if(frame.dataset.src !== loc.lessonUrl){
+    requestAnimationFrame(()=>requestAnimationFrame(()=>{
+      frame.src = loc.lessonUrl;
+      frame.dataset.src = loc.lessonUrl;
+    }));
+  }
+}
+
+// Return to the map. Blank the frame so the video stops playing.
+function closeLesson(){
+  const frame = document.getElementById("lessonFrame");
+  document.getElementById("main").classList.remove("lesson");
+  frame.src = "about:blank";
+  frame.dataset.src = "";
+  document.getElementById("mapBtn").classList.add("active");
+}
+
+function setStreetView(on){
+  const main = document.getElementById("main");
+  document.getElementById("svBtn").classList.toggle("active", on);
+  document.getElementById("mapBtn").classList.toggle("active", !on);
+
+  if(!on){
+    main.classList.remove("streetview");
+    panorama.setVisible(false);
+    return;
+  }
+
+  // Find the nearest panorama within 1 km — needed for rural spots like Gartan,
+  // where imagery may not sit exactly on the marker.
+  const loc = LOCATIONS[activeIndex];
+  const target = {lat:loc.lat, lng:loc.lng};
+  svService.getPanorama({location:target, radius:1000, source:google.maps.StreetViewSource.OUTDOOR}, (data, status)=>{
+    if(status === "OK"){
+      panorama.setPano(data.location.pano);
+      panorama.setPov({heading:loc.heading, pitch:loc.pitch});
+      panorama.setVisible(true);
+      main.classList.add("streetview");
+    } else {
+      // No imagery nearby — stay on the map and let the user know.
+      main.classList.remove("streetview");
+      panorama.setVisible(false);
+      document.getElementById("svBtn").classList.remove("active");
+      document.getElementById("mapBtn").classList.add("active");
+      alert("No Street View imagery near " + loc.name + " — showing the map instead.");
+    }
+  });
+}
+
+// Show the overlay. `reason` lets us tell "no key yet" apart from "auth failed".
+function showGate(reason){
+  const box = document.querySelector("#keygate .box");
+  if(reason === "auth"){
+    box.innerHTML = `
+      <h3>Google Maps couldn't authorize</h3>
+      <p>Your key is set, but Google rejected it. This is almost always a Cloud console setting, not the code. Check, in order:</p>
+      <ol>
+        <li>Enable <strong>Maps JavaScript API</strong> for this project.</li>
+        <li>Enable <strong>billing</strong> on the project (required, even for the free tier).</li>
+        <li>If the key is restricted by referrer, make sure it allows the site you're opening it from
+            (e.g. <code>https://TU-USUARIO.github.io/*</code>).</li>
+      </ol>
+      <p style="margin-top:14px">Open the browser console (F12) — the exact error, e.g.
+        <code>ApiNotActivatedMapError</code> or <code>BillingNotEnabledMapError</code>, tells you which one.</p>`;
+  }
+  document.getElementById("keygate").classList.add("show");
+}
+// Google calls this if the key fails to authorize.
+window.gm_authFailure = ()=>showGate("auth");
+
+/* ---------- Load the Google Maps script ----------
+   Paste your key below. It must start with "AIza". */
+const GOOGLE_MAPS_API_KEY = "AIzaSyATd831on8PZ9t1AF3GVngVDmidbVvC_Gc";
+
+(function loadMaps(){
+  // A real key starts with "AIza"; the placeholder does not. This check does NOT
+  // repeat the key string, so a find-and-replace can't accidentally break it.
+  const looksValid = /^AIza[0-9A-Za-z_\-]{10,}$/.test(GOOGLE_MAPS_API_KEY || "");
+  if(!looksValid){ showGate("key"); return; }
+
+  const s = document.createElement("script");
+  s.src = `https://maps.googleapis.com/maps/api/js?key=${GOOGLE_MAPS_API_KEY}&callback=initMap&v=weekly`;
+  s.async = true;
+  s.onerror = ()=>showGate("auth");
+  document.head.appendChild(s);
+})();
+</script>
+</body>
+</html>
