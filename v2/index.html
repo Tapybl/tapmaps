@@ -31,10 +31,20 @@
   header{display:flex;align-items:center;justify-content:space-between;gap:16px;
     padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel);z-index:5}
   .brand{display:flex;align-items:center;gap:12px}
-  .brand .tile{width:34px;height:34px;border-radius:9px;background:var(--coral);display:flex;align-items:center;justify-content:center;flex:none}
-  .brand .tile svg{width:44%;height:44%;fill:#fff}
-  .brand .wm{font-family:var(--wm);font-weight:800;font-size:1.35rem;letter-spacing:-.04em}
+  .brand .mark{height:34px;width:auto;flex:none;overflow:visible}
+  .brand .mark .body{fill:var(--coral);stroke:var(--coral)}
+  .brand .mark .cut{fill:var(--panel)}
+  .brand .mark .wheel{fill:var(--coral)}
+  .brand .mark .dot{fill:var(--panel)}
+  .brand .wm{font-family:var(--wm);font-weight:800;font-size:1.5rem;letter-spacing:-.035em;color:var(--ink)}
   .tagline{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
+
+  /* HUD pill button (from the brand HUD button set) */
+  .hud-pill{display:inline-flex;align-items:center;gap:9px;font-family:var(--mono);font-size:.72rem;
+    letter-spacing:.08em;text-transform:uppercase;font-weight:700;color:#14140F;background:#F3F1EC;
+    border:none;border-radius:999px;padding:9px 16px;cursor:pointer;transition:background .2s}
+  .hud-pill:hover{background:#fff}
+  .hud-pill svg{width:16px;height:16px}
 
   /* ---------- Layout ---------- */
   .app{flex:1;display:flex;min-height:0}
@@ -125,6 +135,16 @@
 
 <header>
   <div class="brand">
+    <svg class="mark" viewBox="0 0 108 84" role="img" aria-label="tapmaps">
+      <path class="body" d="M54 12 L86 66 L22 66 Z" stroke-width="14" stroke-linejoin="round"/>
+      <circle class="cut" cx="27" cy="70" r="10.5"/>
+      <circle class="cut" cx="81" cy="70" r="10.5"/>
+      <circle class="wheel" cx="27" cy="70" r="7.5"/>
+      <circle class="wheel" cx="81" cy="70" r="7.5"/>
+      <circle class="dot" cx="45" cy="63" r="3"/>
+      <circle class="dot" cx="54" cy="63" r="3"/>
+      <circle class="dot" cx="63" cy="63" r="3"/>
+    </svg>
     <span class="wm">tapmaps</span>
   </div>
 </header>
@@ -137,7 +157,7 @@
     </div>
     <div class="locs" id="locs"><!-- location buttons injected by JS --></div>
     <div class="aside-foot">
-      Pick a place, then hit <strong style="color:var(--ink)">See the road</strong> to drop into Street View.
+      Pick a place, then click its <strong style="color:var(--ink)">pin</strong> to watch the lesson.
     </div>
   </aside>
 
@@ -148,36 +168,14 @@
     <!-- Lesson opens inside the map frame -->
     <div id="lessonWrap">
       <div id="lessonBar">
-        <button class="btn" id="lessonClose">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg>
-          Back to map
+        <button class="hud-pill" id="lessonClose">
+          <svg viewBox="0 0 24 24" fill="none" stroke="#14140F" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"><path d="M9 4 3 6v14l6-2 6 2 6-2V4l-6 2-6-2Z"/><path d="M9 4v14M15 6v14"/></svg>
+          Return to map
         </button>
         <span id="lessonTitle">Lesson</span>
         <a class="btn" id="lessonOpenNew" href="#" target="_blank" rel="noopener">Open in new tab ↗</a>
       </div>
       <iframe id="lessonFrame" title="Lesson" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>
-    </div>
-
-    <div class="controls">
-      <button class="btn" id="mapBtn">
-        <svg viewBox="0 0 24 24"><path d="M12 2C7.6 2 4 5.6 4 10c0 5.4 8 12 8 12s8-6.6 8-12c0-4.4-3.6-8-8-8Zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6Z"/></svg>
-        Map
-      </button>
-      <button class="btn primary" id="svBtn">
-        <svg viewBox="0 0 24 24"><path d="M8 6 Q8 4 10 5 L19 11 Q21 12 19 13 L10 19 Q8 20 8 18 Z"/></svg>
-        See the road
-      </button>
-    </div>
-
-    <div class="info" id="info">
-      <div class="lbl" id="infoTag">Location 1 / 3</div>
-      <h2 id="infoName">—</h2>
-      <p id="infoDesc">—</p>
-      <div class="coords" id="infoCoords">—</div>
-      <a class="btn primary lesson-btn" id="lessonBtn" href="#" target="_blank" rel="noopener">
-        <svg viewBox="0 0 24 24"><path d="M8 6 Q8 4 10 5 L19 11 Q21 12 19 13 L10 19 Q8 20 8 18 Z"/></svg>
-        <span id="lessonLabel">Watch lesson</span>
-      </a>
     </div>
 
     <!-- shown if the API key is still the placeholder -->
@@ -287,11 +285,6 @@ function initMap(){
   buildLocationList();
   selectLocation(0, /*animate*/ false);
 
-  document.getElementById("svBtn").addEventListener("click", ()=>{ closeLesson(); setStreetView(true); });
-  document.getElementById("mapBtn").addEventListener("click", ()=>{ closeLesson(); setStreetView(false); });
-
-  // "Watch lesson" opens inside the frame instead of a new tab.
-  document.getElementById("lessonBtn").addEventListener("click", (e)=>{ e.preventDefault(); openLesson(activeIndex); });
   document.getElementById("lessonClose").addEventListener("click", closeLesson);
 }
 
@@ -336,20 +329,6 @@ function selectLocation(i, animate){
   // keep the panorama aimed at the new place
   panorama.setPosition(pos);
   panorama.setPov({heading:loc.heading, pitch:loc.pitch});
-
-  // update info card
-  document.getElementById("infoTag").textContent  = `Location ${i+1} / ${LOCATIONS.length}`;
-  document.getElementById("infoName").textContent = loc.city;
-  document.getElementById("infoDesc").textContent = loc.desc;
-  document.getElementById("infoCoords").textContent =
-    `${loc.lat.toFixed(4)}, ${loc.lng.toFixed(4)}`;
-
-  // lesson CTA
-  const btn = document.getElementById("lessonBtn");
-  document.getElementById("lessonLabel").textContent = `Watch: ${loc.lesson}`;
-  const ready = isLessonReady(loc.lessonUrl);
-  btn.href = ready ? loc.lessonUrl : "#";
-  btn.classList.toggle("disabled", !ready);
 }
 
 // A lesson URL is "ready" once it's a real http(s) link (not the placeholder).
@@ -373,8 +352,6 @@ function openLesson(i){
   panorama.setVisible(false);
   main.classList.remove("streetview");
   main.classList.add("lesson");
-  document.getElementById("svBtn").classList.remove("active");
-  document.getElementById("mapBtn").classList.remove("active");
 
   // Load only after layout has applied, so the player mounts at the right size.
   if(frame.dataset.src !== loc.lessonUrl){
@@ -391,7 +368,6 @@ function closeLesson(){
   document.getElementById("main").classList.remove("lesson");
   frame.src = "about:blank";
   frame.dataset.src = "";
-  document.getElementById("mapBtn").classList.add("active");
 }
 
 function setStreetView(on){
