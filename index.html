@@ -200,20 +200,32 @@
    tapmaps · three locations
    ============================================================ */
 
+// tapybl SCORM embed: the lesson player renders without login when opened as
+// https://staging.edu.tapybl.com/scorm/{publishedLessonId}/{secret}
+// The secret is org-level (same for every lesson); only the lesson id changes.
+// Get each publishedLessonId from that course's SCORM export (lessons/<id>.html).
+const TAPYBL_SCORM_BASE = "https://staging.edu.tapybl.com/scorm";
+const TAPYBL_SCORM_SECRET = "c157cbf555ded7f5bbf408791af9d9b2";
+function scormEmbed(publishedLessonId){
+  // returns "" (button stays disabled) until a real lesson id is filled in
+  if(!publishedLessonId || publishedLessonId.startsWith("PENDING")) return "";
+  return `${TAPYBL_SCORM_BASE}/${publishedLessonId}/${TAPYBL_SCORM_SECRET}`;
+}
+
 // The three places. Coordinates point at a spot with good Street View coverage.
 const LOCATIONS = [
   { id:"budapest", name:"Budapest", city:"Hungary", color:"var(--indigo)", initial:"B",
     lat:47.507121, lng:19.045552, zoom:16, heading:210, pitch:0,
     desc:"The Danube embankment past the neo-Gothic Parliament — a classic riverside drive.",
-    lesson:"Driving Hungary", lessonUrl:"https://tapybledu-staging.azureedge.net/preview/a6667abc-a5fb-4fc1-3ca2-08dcbd44343a/course/c062f1e3-65aa-41aa-d999-08ded61ddc2d/lesson/b1836719-4f53-4921-5034-08ded624411a" },
+    lesson:"Driving Hungary", lessonUrl:scormEmbed("PENDING_HUNGARY_PUBLISHED_LESSON_ID") },
   { id:"gartan",   name:"Gartan",   city:"Ireland", color:"var(--green)",  initial:"G",
     lat:55.028900, lng:-7.899200, zoom:15, heading:90,  pitch:0,
     desc:"Rolling lakeland around Gartan Lough in County Donegal — quiet rural roads.",
-    lesson:"Driving Ireland", lessonUrl:"https://tapybledu-staging.azureedge.net/preview/a6667abc-a5fb-4fc1-3ca2-08dcbd44343a/course/0f3987a1-625e-4b6a-d99c-08ded61ddc2d/lesson/9a12cff6-cbf7-4bf5-5037-08ded624411a" },
+    lesson:"Driving Ireland", lessonUrl:scormEmbed("PENDING_IRELAND_PUBLISHED_LESSON_ID") },
   { id:"chennai",  name:"Chennai",  city:"India",   color:"var(--amber)",  initial:"C",
     lat:13.050000, lng:80.282400, zoom:16, heading:200, pitch:0,
     desc:"The Marina Beach seafront drive along the Bay of Bengal in Tamil Nadu.",
-    lesson:"Driving India", lessonUrl:"https://tapybledu-staging.azureedge.net/preview/a6667abc-a5fb-4fc1-3ca2-08dcbd44343a/course/cc48a73e-c86f-49ff-d99d-08ded61ddc2d/lesson/1cdad286-8268-4f31-503a-08ded624411a" },
+    lesson:"Driving India", lessonUrl:scormEmbed("1ba87836-9a58-45a1-bb3a-08ded6a0920b") },
 ];
 
 // Subtle light map style, on-brand and calm.
