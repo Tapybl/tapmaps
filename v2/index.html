@@ -464,22 +464,26 @@ function openLesson(i){
     // show the floating-logo loader until the player finishes loading
     const stage = document.getElementById("lessonStage");
     stage.classList.remove("loaded");
-    // Load only after layout has applied, so the tapybl player mounts at the right size.
-    if(frame.dataset.src !== loc.lessonUrl){
+    // Resize nudge: change the iframe box so the embedded player re-lays-out.
+    const nudge = ()=>{ frame.style.bottom = "16px"; requestAnimationFrame(()=>requestAnimationFrame(()=>{ frame.style.bottom = ""; })); };
+
+    const loadFrame = ()=>{
+      if(frame.dataset.src === loc.lessonUrl){ stage.classList.add("loaded"); return; }
       frame.onload = ()=>{
-        // Nudge the iframe box so the embedded player re-measures. Image-first
-        // lessons (e.g. India) otherwise collapse the video area to 0 (black).
-        const nudge = ()=>{ frame.style.bottom = "1px"; requestAnimationFrame(()=>{ frame.style.bottom = ""; }); };
-        setTimeout(()=>{ nudge(); setTimeout(()=>stage.classList.add("loaded"), 250); }, 500);
-        setTimeout(nudge, 1500);
+        [200, 900, 1800].forEach(t => setTimeout(nudge, t));
+        setTimeout(()=>stage.classList.add("loaded"), 2000);
       };
-      requestAnimationFrame(()=>requestAnimationFrame(()=>{
-        frame.src = loc.lessonUrl;
-        frame.dataset.src = loc.lessonUrl;
-      }));
-    } else {
-      stage.classList.add("loaded");
-    }
+      frame.src = loc.lessonUrl;
+      frame.dataset.src = loc.lessonUrl;
+    };
+
+    // Load into a fully-settled, static modal (after the entrance animation),
+    // so the player measures its final size — not a mid-animation one.
+    const modal = document.getElementById("lessonModal");
+    let started = false;
+    const start = ()=>{ if(started) return; started = true; modal.removeEventListener("animationend", start); loadFrame(); };
+    modal.addEventListener("animationend", start);
+    setTimeout(start, 760); // fallback if animationend doesn't fire
   };
   reduce ? reveal() : setTimeout(reveal, 520);
 }
