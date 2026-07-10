@@ -112,13 +112,13 @@
   main.lesson #lessonWrap{display:flex}
   #lessonWrap::before{content:"";position:absolute;inset:0;background:rgba(11,12,16,.5);
     backdrop-filter:blur(7px);-webkit-backdrop-filter:blur(7px)}
-  #lessonModal{position:relative;width:min(860px,100%);max-height:100%;display:flex;flex-direction:column;
+  #lessonModal{position:relative;width:min(1200px,94vw);height:min(86vh,860px);display:flex;flex-direction:column;
     background:var(--panel);border:1px solid var(--line);border-radius:18px;overflow:hidden;
     box-shadow:0 30px 80px rgba(0,0,0,.55)}
   #lessonBar{display:flex;align-items:center;gap:14px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel);flex:none}
   #lessonTitle{font-family:var(--head);font-weight:700;font-size:1rem;letter-spacing:-.01em;color:var(--ink)}
   #lessonClose{padding:7px 12px}
-  #lessonStage{position:relative;width:100%;aspect-ratio:16/9;max-height:calc(100vh - 190px);background:#0b0c10}
+  #lessonStage{position:relative;flex:1;min-height:0;width:100%;background:#0b0c10}
   #lessonFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#0b0c10}
   /* entrance: backdrop eases in first, modal glides in just after */
   main.lesson #lessonWrap::before{animation:tm-fade .55s ease both}
