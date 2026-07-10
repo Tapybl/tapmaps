@@ -31,11 +31,12 @@
   header{display:flex;align-items:center;justify-content:space-between;gap:16px;
     padding:14px 22px;border-bottom:1px solid var(--line);background:var(--panel);z-index:5}
   .brand{display:flex;align-items:center;gap:12px}
-  .brand .mark{height:34px;width:auto;flex:none;overflow:visible}
-  .brand .mark .body{fill:var(--coral);stroke:var(--coral)}
-  .brand .mark .cut{fill:var(--panel)}
-  .brand .mark .wheel{fill:var(--coral)}
-  .brand .mark .cutstroke{stroke:var(--panel)}
+  .brand .mark{height:34px;width:auto;flex:none}
+  .mark{overflow:visible}
+  .mark .body{fill:var(--coral);stroke:var(--coral)}
+  .mark .wheel{fill:var(--coral)}
+  .mark .cut{fill:var(--panel)}
+  .mark .cutstroke{stroke:var(--panel)}
   .brand .wm{font-family:var(--wm);font-weight:800;font-size:1.5rem;letter-spacing:-.035em;color:var(--ink)}
   .tagline{font-family:var(--mono);font-size:.62rem;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
 
@@ -128,6 +129,31 @@
     main.lesson #lessonWrap::before,main.lesson #lessonModal{animation:none}
   }
 
+  /* page preloader (floating logo) */
+  #preloader{position:fixed;inset:0;z-index:100;background:var(--bg);display:flex;flex-direction:column;
+    align-items:center;justify-content:center;gap:26px;transition:opacity .5s ease,visibility .5s}
+  #preloader.hidden{opacity:0;visibility:hidden}
+  #preloader .plogo{display:flex;align-items:center;gap:14px;animation:tm-float 2.4s ease-in-out infinite}
+  #preloader .plogo .mark{height:52px}
+  #preloader .plogo .wm{font-family:var(--wm);font-weight:800;font-size:2.3rem;letter-spacing:-.04em;color:var(--ink)}
+  #preloader .mark .cut{fill:var(--bg)} #preloader .mark .cutstroke{stroke:var(--bg)}
+  #preloader .bar{width:170px;height:3px;border-radius:3px;background:var(--line);overflow:hidden}
+  #preloader .bar i{display:block;height:100%;width:36%;border-radius:3px;background:var(--coral);animation:tm-load 1.3s ease-in-out infinite}
+
+  /* iframe loader (floating logo over the lesson stage) */
+  #lessonLoader{position:absolute;inset:0;z-index:2;display:flex;align-items:center;justify-content:center;
+    background:#0b0c10;transition:opacity .45s ease}
+  #lessonStage.loaded #lessonLoader{opacity:0;pointer-events:none}
+  #lessonLoader .mark{height:60px;animation:tm-float 2.2s ease-in-out infinite}
+  #lessonLoader .mark .cut{fill:#0b0c10} #lessonLoader .mark .cutstroke{stroke:#0b0c10}
+
+  @keyframes tm-float{0%,100%{transform:translateY(0)}50%{transform:translateY(-9px)}}
+  @keyframes tm-load{0%{transform:translateX(-120%)}100%{transform:translateX(360%)}}
+  @media (prefers-reduced-motion:reduce){
+    #preloader .plogo,#lessonLoader .mark{animation:none}
+    #preloader .bar i{animation:none;width:100%}
+  }
+
   /* floating info card */
   .info{position:absolute;left:20px;bottom:20px;z-index:4;width:min(340px,calc(100% - 40px));
     background:rgba(20,22,27,.92);backdrop-filter:blur(10px);border:1px solid var(--line);
@@ -173,6 +199,19 @@
 </style>
 </head>
 <body>
+
+<div id="preloader">
+  <div class="plogo">
+    <svg class="mark" viewBox="0 0 96 90" aria-hidden="true"><g transform="translate(0,7)">
+      <path class="body" d="M48 19 L75 61 L21 61 Z" stroke-width="14" stroke-linejoin="round"/>
+      <circle class="cut" cx="21" cy="61" r="11.5"/><circle class="wheel" cx="21" cy="61" r="7"/>
+      <circle class="cut" cx="75" cy="61" r="11.5"/><circle class="wheel" cx="75" cy="61" r="7"/>
+      <path class="cutstroke" d="M39 61 L57 61" stroke-width="5.5" stroke-dasharray="0.1 9" stroke-linecap="round" fill="none"/>
+    </g></svg>
+    <span class="wm">tapmaps</span>
+  </div>
+  <div class="bar"><i></i></div>
+</div>
 
 <header>
   <div class="brand">
@@ -220,6 +259,14 @@
           <span id="lessonTitle">Lesson</span>
         </div>
         <div id="lessonStage">
+          <div id="lessonLoader">
+            <svg class="mark" viewBox="0 0 96 90" aria-hidden="true"><g transform="translate(0,7)">
+              <path class="body" d="M48 19 L75 61 L21 61 Z" stroke-width="14" stroke-linejoin="round"/>
+              <circle class="cut" cx="21" cy="61" r="11.5"/><circle class="wheel" cx="21" cy="61" r="7"/>
+              <circle class="cut" cx="75" cy="61" r="11.5"/><circle class="wheel" cx="75" cy="61" r="7"/>
+              <path class="cutstroke" d="M39 61 L57 61" stroke-width="5.5" stroke-dasharray="0.1 9" stroke-linecap="round" fill="none"/>
+            </g></svg>
+          </div>
           <iframe id="lessonFrame" title="Lesson" allow="autoplay; fullscreen; encrypted-media; picture-in-picture" allowfullscreen></iframe>
         </div>
       </div>
@@ -387,6 +434,11 @@ function selectLocation(i, animate){
 // A lesson URL is "ready" once it's a real http(s) link (not the placeholder).
 function isLessonReady(url){ return /^https?:\/\//.test(url || ""); }
 
+// Page preloader: hold briefly to simulate loading, then reveal the app.
+function hidePreloader(){ const p = document.getElementById("preloader"); if(p) p.classList.add("hidden"); }
+window.addEventListener("load", ()=> setTimeout(hidePreloader, 700));
+setTimeout(hidePreloader, 3000); // fallback if 'load' is slow
+
 // Open the platform lesson inside the map frame (the platform gates with login).
 function openLesson(i){
   const loc = LOCATIONS[i];
@@ -409,12 +461,18 @@ function openLesson(i){
     panorama.setVisible(false);
     main.classList.remove("streetview");
     main.classList.add("lesson");
+    // show the floating-logo loader until the player finishes loading
+    const stage = document.getElementById("lessonStage");
+    stage.classList.remove("loaded");
     // Load only after layout has applied, so the tapybl player mounts at the right size.
     if(frame.dataset.src !== loc.lessonUrl){
+      frame.onload = ()=>{ setTimeout(()=>stage.classList.add("loaded"), 600); };
       requestAnimationFrame(()=>requestAnimationFrame(()=>{
         frame.src = loc.lessonUrl;
         frame.dataset.src = loc.lessonUrl;
       }));
+    } else {
+      stage.classList.add("loaded");
     }
   };
   reduce ? reveal() : setTimeout(reveal, 520);
