@@ -119,11 +119,11 @@
   #lessonClose{padding:7px 12px}
   #lessonStage{position:relative;width:100%;aspect-ratio:16/9;max-height:calc(100vh - 190px);background:#0b0c10}
   #lessonFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#0b0c10}
-  /* entrance: backdrop fades in, modal pops after the map zoom */
-  main.lesson #lessonWrap::before{animation:tm-fade .35s ease both}
-  main.lesson #lessonModal{animation:tm-pop .42s cubic-bezier(.2,.8,.2,1) both}
+  /* entrance: backdrop eases in first, modal glides in just after */
+  main.lesson #lessonWrap::before{animation:tm-fade .55s ease both}
+  main.lesson #lessonModal{animation:tm-pop .6s cubic-bezier(.22,.61,.36,1) .08s both;will-change:transform,opacity}
   @keyframes tm-fade{from{opacity:0}to{opacity:1}}
-  @keyframes tm-pop{from{opacity:0;transform:scale(.9) translateY(10px)}to{opacity:1;transform:none}}
+  @keyframes tm-pop{from{opacity:0;transform:scale(.975) translateY(6px)}to{opacity:1;transform:none}}
   @media (prefers-reduced-motion:reduce){
     main.lesson #lessonWrap::before,main.lesson #lessonModal{animation:none}
   }
