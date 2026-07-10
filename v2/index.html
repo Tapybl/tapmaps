@@ -14,7 +14,7 @@
   :root{
     --bg:#0D0E12; --panel:#14161B; --panel-2:#1A1D24; --line:#242A35;
     --ink:#F2F4F8; --muted:#8A92A2; --faint:#565E6E;
-    --coral:#2BD97C; --coral-600:#22C46E; /* brand green accent (was coral) */
+    --coral:#2F6BFF; --coral-600:#245BE0; /* brand cobalt-blue accent (was coral) */
     /* brand palette (six tones) */
     --cobalt:#2F6BFF; --indigo:#7C6BF6; --amber:#FFB020; --sky:#22B8FF; --green:#2BD97C;
     --head:"Space Grotesk","Helvetica Neue",system-ui,sans-serif;
@@ -338,7 +338,7 @@ let map, panorama, marker, svService, activeIndex = 0;
 // Coral map pin as an inline SVG data-URI (matches the brand).
 function coralPinIcon(){
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="44" height="56" viewBox="0 0 44 56">
-    <path d="M22 2C11 2 2 11 2 22c0 14 20 32 20 32s20-18 20-32C42 11 33 2 22 2Z" fill="#2BD97C" stroke="#fff" stroke-width="2.5"/>
+    <path d="M22 2C11 2 2 11 2 22c0 14 20 32 20 32s20-18 20-32C42 11 33 2 22 2Z" fill="#2F6BFF" stroke="#fff" stroke-width="2.5"/>
     <path d="M17 14 Q17 12 19 13 L30 20 Q32 21 30 22 L19 29 Q17 30 17 28 Z" fill="#fff"/>
   </svg>`;
   return { url:"data:image/svg+xml;charset=UTF-8," + encodeURIComponent(svg),
