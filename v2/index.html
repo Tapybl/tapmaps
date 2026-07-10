@@ -466,7 +466,13 @@ function openLesson(i){
     stage.classList.remove("loaded");
     // Load only after layout has applied, so the tapybl player mounts at the right size.
     if(frame.dataset.src !== loc.lessonUrl){
-      frame.onload = ()=>{ setTimeout(()=>stage.classList.add("loaded"), 600); };
+      frame.onload = ()=>{
+        // Nudge the iframe box so the embedded player re-measures. Image-first
+        // lessons (e.g. India) otherwise collapse the video area to 0 (black).
+        const nudge = ()=>{ frame.style.bottom = "1px"; requestAnimationFrame(()=>{ frame.style.bottom = ""; }); };
+        setTimeout(()=>{ nudge(); setTimeout(()=>stage.classList.add("loaded"), 250); }, 500);
+        setTimeout(nudge, 1500);
+      };
       requestAnimationFrame(()=>requestAnimationFrame(()=>{
         frame.src = loc.lessonUrl;
         frame.dataset.src = loc.lessonUrl;
