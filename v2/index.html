@@ -68,6 +68,8 @@
   .search-bar:focus-within{border-color:transparent;box-shadow:0 8px 26px rgba(0,0,0,.45),0 0 0 3px var(--neon-soft)}
   .search-bar input{flex:1;min-width:0;border:none;outline:none;background:transparent;font-size:.98rem;
     color:var(--text);font-family:var(--body)}
+  /* The whole bar shows focus (below); the input itself never draws its own ring */
+  .search-bar input:focus,.search-bar input:focus-visible{outline:none;box-shadow:none}
   .search-bar input::placeholder{color:var(--faint)}
   .search-ico{background:transparent;border:none;cursor:pointer;color:var(--muted);display:flex;
     align-items:center;justify-content:center;padding:6px}
@@ -91,6 +93,11 @@
   .sr-row .m .n{font-family:var(--head);font-weight:600;font-size:.98rem;color:var(--text);letter-spacing:-.01em}
   .sr-row .m .c{font-family:var(--mono);font-size:.62rem;color:var(--muted);margin-top:2px;letter-spacing:.04em;
     text-transform:uppercase;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  /* Favorite star — neon accent with a soft glow (brand: neon acts, glow allowed) */
+  .sr-row .fav{margin-left:auto;flex:none;display:flex;align-items:center;justify-content:center;
+    color:var(--neon-cyan);filter:drop-shadow(0 0 6px rgba(126,228,247,.4));transition:transform .15s,filter .15s}
+  .sr-row .fav svg{width:19px;height:19px;fill:currentColor}
+  .sr-row:hover .fav{transform:scale(1.08);filter:drop-shadow(0 0 9px rgba(126,228,247,.6))}
   .sr-empty{padding:14px 16px;color:var(--muted);font-size:.9rem}
 
   /* ---------- Layout ---------- */
@@ -402,6 +409,9 @@ function initSearch(){
       <div class="sr-row" data-i="${i}">
         <span class="swatch" style="background:${l.color}">${l.initial}</span>
         <span class="m"><span class="n">${l.name}</span><span class="c">${l.city} · ${l.lesson}</span></span>
+        <span class="fav" aria-label="Saved place" title="Saved">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 2.6l2.7 5.47 6.04.88-4.37 4.26 1.03 6.02L12 16.9l-5.4 2.84 1.03-6.02L3.26 9.46l6.04-.88L12 2.6Z"/></svg>
+        </span>
       </div>`).join("") : `<div class="sr-empty">No matches</div>`;
     list.querySelectorAll(".sr-row").forEach(row=>{
       row.addEventListener("mousedown", e=>e.preventDefault()); // keep input focus through the click
