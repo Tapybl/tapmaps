@@ -372,7 +372,7 @@ function initMap(){
   });
 
   marker = new google.maps.Marker({ map, position:{lat:start.lat, lng:start.lng}, icon:coralPinIcon(),
-    cursor:"pointer", title:"Open lesson" });
+    cursor:"pointer", title:"Start Driving" });
   // Clicking the pin opens the gated lesson on the platform.
   marker.addListener("click", ()=>openLesson(activeIndex));
 
