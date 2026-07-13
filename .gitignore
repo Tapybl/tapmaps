@@ -1,3 +1,8 @@
 .DS_Store
 *.zip
+
+# SCORM export packages (uploaded to the LMS separately, not versioned here)
 Driving*/
+/Budapest/
+/Chennai/
+/Donegal/
