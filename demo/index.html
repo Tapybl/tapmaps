@@ -121,8 +121,14 @@
   #lessonBar{display:flex;align-items:center;gap:14px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel);flex:none}
   #lessonTitle{font-family:var(--head);font-weight:600;font-size:1rem;letter-spacing:-.02em;color:var(--text)}
   #lessonClose{padding:7px 12px}
-  #lessonStage{position:relative;flex:1;min-height:0;width:100%;background:#0b0c10}
-  #lessonFrame{position:absolute;inset:0;width:100%;height:100%;border:0;background:#0b0c10}
+  #lessonStage{position:relative;flex:1;min-height:0;width:100%;background:#0b0c10;
+    display:flex;align-items:center;justify-content:center;container-type:size}
+  /* Keep the whole video visible on every screen: fit a 16:9 box inside the stage
+     (letterboxed with the stage background) instead of stretching to a shape the
+     cross-origin player would crop. min() picks whichever dimension is the limit. */
+  #lessonFrame{position:relative;border:0;background:#0b0c10;
+    width:min(100cqw, calc(100cqh * 16 / 9));
+    height:min(100cqh, calc(100cqw * 9 / 16))}
   /* entrance: backdrop eases in first, modal glides in just after */
   main.lesson #lessonWrap::before{animation:tm-fade .55s ease both}
   main.lesson #lessonModal{animation:tm-pop .6s cubic-bezier(.22,.61,.36,1) .08s both;will-change:transform,opacity}
@@ -317,15 +323,15 @@ const LOCATIONS = [
   { id:"budapest", name:"Budapest", city:"Hungary", color:"var(--w2)", initial:"B",
     lat:47.508592790556456, lng:19.068401514414507, zoom:16, heading:210, pitch:0,
     desc:"The Danube embankment past the neo-Gothic Parliament — a classic riverside drive.",
-    lesson:"Driving Hungary", lessonUrl:scormEmbed("7fd49ace-64f2-4ec1-bb3b-08ded6a0920b") },
+    lesson:"Budapest Drive", lessonUrl:scormEmbed("bcfc7da3-22a5-471d-c6a1-08dee0da988d") },
   { id:"gartan",   name:"Gartan",   city:"Ireland", color:"var(--w1)",  initial:"G",
     lat:54.98847864834134, lng:-7.873540826857614, zoom:15, heading:90,  pitch:0,
     desc:"Rolling lakeland around Gartan Lough in County Donegal — quiet rural roads.",
-    lesson:"Driving Ireland", lessonUrl:scormEmbed("5e5ecf73-a09c-4c7c-bb3c-08ded6a0920b") },
+    lesson:"Gartan Drive", lessonUrl:scormEmbed("d4696a83-d938-4276-c6a2-08dee0da988d") },
   { id:"chennai",  name:"Chennai",  city:"India",   color:"var(--w3)",  initial:"C",
     lat:13.11432825680305, lng:80.22735327823206, zoom:16, heading:200, pitch:0,
     desc:"The Marina Beach seafront drive along the Bay of Bengal in Tamil Nadu.",
-    lesson:"Driving India", lessonUrl:scormEmbed("1ba87836-9a58-45a1-bb3a-08ded6a0920b") },
+    lesson:"Chennai Drive", lessonUrl:scormEmbed("ed11fbda-3d48-4eaf-c6a3-08dee0da988d") },
 ];
 
 // Dark Ink map — the product surface (brand book §03: Ink dominates).
